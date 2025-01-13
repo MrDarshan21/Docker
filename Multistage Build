@@ -1,0 +1,107 @@
+Docker
+
+# Multistage build  
+	A multi-stage build in Docker is a process where you use 
+	multiple FROM instructions to define different stages in a Dockerfile. 
+	It is primarily used to optimize Docker images by separating the 
+	build and production environments. 
+	The goal is to keep the final image small, containing only the 
+	necessary files and dependencies needed for the application to run.
+
+*How Does Multi-Stage Build Work?
+1.Build Stage:
+	Contains all the tools, dependencies, and source files required to build the application.
+	Includes compilers, build tools, and development dependencies.
+
+2.Production Stage:
+	Copies the final build artifacts (e.g., binaries, compiled code) from the build stage.
+	Includes only production dependencies, ensuring a smaller and cleaner image.
+
+*Benefits of Multi-Stage Builds
+
+1.Smaller Image Size:
+	By excluding build tools and development dependencies, the final image is lightweight and contains only runtime essentials.
+
+2.Improved Security:
+	Limits the attack surface by removing unnecessary tools and files.
+
+3.Efficient Caching:
+	Each stage can leverage Docker’s layer caching to speed up builds.
+
+4.Better Separation of Concerns:
+	The build process and runtime environments are isolated, making it easier to debug and maintain.
+
+
+FROM node As build    (Specifies the node image as the base image for this stage.
+Labels this stage as build.)
+WORKDIR /usr/src/app   (Sets the working directory to /usr/src/app inside the container.
+All subsequent commands run relative to this directory.)
+COPY Package.json    (Copies only the package.json file from the host to the working directory.
+Helps leverage Docker's caching to avoid re-installing dependencies unnecessarily.)
+COPY .  .   (Copies all files from the host to the container's working directory (/usr/src/app).)
+   (ec2-current directory)  (container current directory)
+RUN npm install   (Installs all dependencies, including development dependencies, defined in package.json.)
+CMD ["node","index.js"]  (Defines the default command for the build stage, but it is not typically executed in this stage (used for testing if needed).)
+FROM node
+COPY --from=build /app/dist  /dist
+EXPOSE 3000
+RUN npm install
+CMD ["node" ,"./dist/index.js"] 
+
+-create one directory multistage
+-under that directory create one file that is Dockerfile
+-under the docker file write following code
+	
+
+	FROM node AS build
+	WORKDIR /usr/src/app
+	COPY package.json .
+	COPY . .
+	RUN npm install
+	CMD ["node","index.js"]
+
+	FROM node AS production
+	WORKDIR /usr/src/app
+	COPY --from=build /usr/src/app/dist ./dist
+	COPY --from=build /usr/src/app/package*.json ./
+
+	RUN npm install --only=production
+
+	EXOPOSE 3000
+
+	CMD ["node","dist/index.js"]
+
+
+-Then build an image that is
+	docker build -t nodeimg .
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
